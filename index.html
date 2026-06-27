@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중국어 기본어휘 무한 문장 배열 생성기</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --light: #f8f9fa;
+        }
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #eef2f5;
+            color: var(--primary);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        }
+        .title-section {
+            text-align: center;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .data-box {
+            background: var(--light);
+            border: 1px dashed #cbd5e1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            resize: vertical;
+        }
+        .btn-load {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: #e2e8f0;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .quiz-box {
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .word-cards {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .card {
+            display: inline-block;
+            background: #34495e;
+            color: white;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .options {
+            margin-top: 20px;
+        }
+        .option-label {
+            display: flex;
+            align-items: center;
+            background: var(--light);
+            border: 1px solid #cbd5e1;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .option-label:hover { background: #edf2f7; }
+        .option-label input { margin-right: 15px; transform: scale(1.2); }
+        
+        .correct { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46; font-weight: bold; }
+        .incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b; }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 5px solid var(--success);
+            background: #f0fdf4;
+            display: none;
+        }
+        .feedback.wrong { border-left-color: var(--error); background: #fef2f2; }
+        .btn-main {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-main:hover { background: #1a252f; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="title-section">
+        <h2>중국어 기본어휘 실시간 무한 어순 결합기</h2>
+        <p style="color:#7f8c8d; margin:5px 0 0 0;">스프레드 시트 데이터를 분석하여 무작위 문법 결합 문제를 동적 생성합니다.</p>
+    </div>
+
+    <div class="data-box">
+        <label style="font-weight: bold; font-size: 14px; display:block; margin-bottom:5px;">📋 구글 스프레드시트 데이터 연동 (복사+붙여넣기 가능)</label>
+        <textarea id="csv-input" placeholder="구글 시트의 내용을 드래그 복사(Ctrl+C)하여 여기에 붙여넣기(Ctrl+V) 하세요. (한자, 병음, 성조, 의미, 품사 구조)"></textarea>
+        <button class="btn-load" onclick="loadUserCSV()">데이터 동기화 및 갱신</button>
+        <span id="data-status" style="margin-left: 10px; font-size: 13px; color: #7f8c8d;">기본 데이터 세트 활성화 중</span>
+    </div>
+
+    <div class="stats">
+        <div id="cnt-played">푼 문제: 0</div>
+        <div id="cnt-score">정답 수: 0 (0%)</div>
+    </div>
+
+    <div class="quiz-box">
+        <p style="font-weight: bold; margin: 0;">💡 아래 제시된 단어들을 중국어 표준 어순에 맞게 배열한 보기를 선택하세요.</p>
+        
+        <div class="word-cards" id="place-cards"></div>
+        <div class="options" id="place-options"></div>
+        
+        <button class="btn-main" id="btn-action" onclick="handleAction()">정답 확인</button>
+        
+        <div class="feedback" id="place-feedback"></div>
+    </div>
+</div>
+
+<script>
+    // 1. 기본 내장 단어 데이터베이스 (스프레드시트 원본 기반 분류 샘플)
+    let vocabularyDB = {
+        "명사": [
+            {w:"爸爸", p:"bàba", m:"아빠"}, {w:"办公室", p:"bàngōngshì", m:"사무실"}, {w:"棒球", p:"bàngqiú", m:"야구"},
+            {w:"包子", p:"bāozi", m:"찐빵"}, {w:"杯子", p:"bēizi", m:"컵"}, {w:"姐姐", p:"jiějie", m:"누나/언니"},
+            {w:"哥哥", p:"gēge", m:"형/오빠"}, {w:"弟弟", p:"dìdi", m:"남동생"}, {w:"妹妹", p:"mèimei", m:"여동생"},
+            {w:"菜单", p:"càidān", m:"식단/메뉴판"}, {w:"비사", p:"bǐsài", m:"시합/경기"}, {w:"회사", p:"gōngsī", m:"회사"}
+        ],
+        "동사": [
+            {w:"爱", p:"ài", m:"사랑하다"}, {w:"安排", p:"ānpái", m:"계획하다"}, {w:"搬", p:"bān", m:"옮기다"},
+            {w:"帮忙", p:"bāngmáng", m:"돕다"}, {w:"帮助", p:"bāngzhù", m:"돕다"}, {w:"吃", p:"chī", m:"먹다"},
+            {w:"喝", p:"hē", m:"마시다"}, {w:"擦", p:"cā", m:"닦다"}, {w:"猜", p:"cāi", m:"추측하다"},
+            {w:"参观", p:"cānguān", m:"견학/참관하다"}, {w:"看", p:"kàn", m:"보다"}
+        ],
+        "형용사": [
+            {w:"安静", p:"ānjìng", m:"조용하다"}, {w:"矮", p:"ǎi", m:"작다"}, {w:"饱", p:"bǎo", m:"배부르다"},
+            {w:"抱歉", p:"bàoqiàn", m:"미안해하다"}, {w:"不好意思", p:"bùhǎoyìsi", m:"부끄럽다/미안하다"},
+            {w:"棒", p:"bàng", m:"훌륭하다/뛰어나다"}
+        ],
+        "부사": [
+            {w:"经常", p:"jīngcháng", m:"자주"}, {w:"必须", p:"bìxū", m:"반드시"}, {w:"比较", p:"bǐjiào", m:"비교적"},
+            {w:"别", p:"bié", m:"~하지 마라"}, {w:"很", p:"hěn", m:"매우"}, {w:"非常", p:"fēi cháng", m:"대단히"}
+        ]
+    };
+
+    // 2. 어순 생성을 위한 문법 결합 구조 템플릿 정의
+    const grammarTemplates = [
+        {
+            structure: ["명사", "부사", "동사", "명사"],
+            build: (w) => ({
+                sentence: `${w[0].w}${w[1].w}${w[2].w}${w[3].w}。`,
+                pinyin: `${w[0].p} ${w[1].p} ${w[2].p} ${w[3].p}.`,
+                meaning: `${w[0].m}은(는) ${w[1].m} ${w[3].m}을(를) ${w[2].m}.`,
+                rules: `기본 구조: [ 주어(${w[0].w}) + 부사(${w[1].w}) + 동사(${w[2].w}) + 목적어(${w[3].w}) ]`
+            })
+        },
+        {
+            structure: ["명사", "부사", "형용사"],
+            build: (w) => ({
+                sentence: `${w[0].w}${w[1].w}${w[2].w}。`,
+                pinyin: `${w[0].p} ${w[1].p} ${w[2].p}.`,
+                meaning: `${w[0].m}은(는) ${w[1].m} ${w[2].m}.`,
+                rules: `형용사 술어문 구조: [ 주어(${w[0].w}) + 정도부사(${w[1].w}) + 형용사술어(${w[2].w}) ] (형용사 앞에는 흔히 부사가 동반됩니다.)`
+            })
+        },
+        {
+            structure: ["명사", "동사", "명사"],
+            build: (w) => ({
+                sentence: `${w[0].w}${w[2].w}${w[1].w}。`,
+                pinyin: `${w[0].p} ${w[2].p} ${w[1].p}.`,
+                meaning: `${w[0].m}은(는) ${w[1].m}을(를) ${w[2].m}.`,
+                rules: `S+V+O 타동사 구조: [ 주어(${w[0].w}) + 동사(${w[2].w}) + 목적어(${w[1].w}) ]`
+            })
+        }
+    ];
+
+    let currentQuiz = null;
+    let isAnswered = false;
+    let played = 0;
+    let score = 0;
+
+    // 3. 사용자가 구글시트에서 복사한 CSV/TSV 실시간 파싱 엔진
+    function loadUserCSV() {
+        const input = document.getElementById('csv-input').value.trim();
+        if(!input) {
+            alert("복사한 시트 데이터 내용이 비어있습니다.");
+            return;
+        }
+
+        let tempDB = { "명사": [], "동사": [], "형용사": [], "부사": [] };
+        const lines = input.split('\n');
+        let parsedCount = 0;
+
+        lines.forEach(line => {
+            // 탭(\t) 또는 쉼표(,) 구분 처리
+            const cols = line.split(/\t|,/);
+            if(cols.length >= 5) {
+                const hanzi = cols[0].trim();
+                const pinyin = cols[1].trim();
+                const meaning = cols[3].trim();
+                const pos = cols[4].trim(); // 품사 필드
+
+                let category = "";
+                if(pos.includes("명사")) category = "명사";
+                else if(pos.includes("동사")) category = "동사";
+                else if(pos.includes("형용사")) category = "형용사";
+                else if(pos.includes("부사")) category = "부사";
+
+                if(category && hanzi && hanzi !== "한자") {
+                    tempDB[category].push({ w: hanzi, p: pinyin, m: meaning });
+                    parsedCount++;
+                }
+            }
+        });
+
+        // 검증 후 전역 컨텍스트 반영
+        if(tempDB["명사"].length > 0 && tempDB["동사"].length > 0) {
+            vocabularyDB = tempDB;
+            document.getElementById('data-status').innerText = `성공! 유저 단어 ${parsedCount}개 동기화 완료`;
+            document.getElementById('data-status').style.color = "#2ecc71";
+            loadQuestion();
+        } else {
+            alert("품사 파싱에 실패했습니다. 스프레드시트의 행 구조(한자, 병음, 성조, 뜻, 품사)를 맞춰 전체 복사했는지 확인하세요.");
+        }
+    }
+
+    function shuffle(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // 4. 알고리즘 기반 문제 실시간 무작위 빌더
+    function loadQuestion() {
+        isAnswered = false;
+        document.getElementById('btn-action').innerText = "정답 확인";
+        document.getElementById('place-feedback').style.display = "none";
+
+        // 무작위 템플릿 추출
+        const template = grammarTemplates[Math.floor(Math.random() * grammarTemplates.length)];
+        let chosenWords = [];
+        let cardComponents = [];
+
+        // 구조에 맞는 단어 랜덤 컴포지션
+        template.structure.forEach(pos => {
+            const pool = vocabularyDB[pos];
+            const picked = pool[Math.floor(Math.random() * pool.length)];
+            chosenWords.push(picked);
+            cardComponents.push(picked.w);
+        });
+
+        // 정답 객체 생성
+        const qData = template.build(chosenWords);
+        currentQuiz = {
+            answer: qData.sentence,
+            pinyin: qData.pinyin,
+            meaning: qData.meaning,
+            rules: qData.rules,
+            components: cardComponents
+        };
+
+        // 상단 문제 힌트 카드 배치
+        const cardPlace = document.getElementById('place-cards');
+        cardPlace.innerHTML = "";
+        shuffle(cardComponents).forEach(w => {
+            cardPlace.innerHTML += `<span class="card">${w}</span>`;
+        });
+
+        // 5지선다 오답 보기 자동 합성 알고리즘 (순열 조합 무작위 셔플)
+        let optionsSet = new Set([currentQuiz.answer]);
+        let attempts = 0;
+        while(optionsSet.size < 5 && attempts < 500) {
+            let fake = shuffle(cardComponents).join("") + "。";
+            optionsSet.add(fake);
+            attempts++;
+        }
+
+        let optionsList = shuffle(Array.from(optionsSet));
+        const optionsPlace = document.getElementById('place-options');
+        optionsPlace.innerHTML = "";
+
+        const labels = ['A', 'B', 'C', 'D', 'E'];
+        optionsList.forEach((opt, index) => {
+            const isCorrect = (opt === currentQuiz.answer);
+            optionsPlace.innerHTML += `
+                <label class="option-label" data-match="${isCorrect}">
+                    <input type="radio" name="q-opt" value="${opt}">
+                    <span><strong>${labels[index]}.</strong> ${opt}</span>
+                </label>
+            `;
+        });
+    }
+
+    function handleAction() {
+        if(!isAnswered) checkAnswer();
+        else loadQuestion();
+    }
+
+    // 5. 정답 및 실시간 오답 피드백 렌더링
+    function checkAnswer() {
+        const selected = document.querySelector('input[name="q-opt"]:checked');
+        if(!selected) {
+            alert("보기를 선택해 주세요!");
+            return;
+        }
+
+        isAnswered = true;
+        played++;
+
+        const isCorrect = selected.parentElement.getAttribute('data-match') === 'true';
+        const allLabels = document.querySelectorAll('.option-label');
+        
+        allLabels.forEach(label => {
+            if(label.getAttribute('data-match') === 'true') label.classList.add('correct');
+            if(label.querySelector('input').checked && label.getAttribute('data-match') !== 'true') {
+                label.classList.add('incorrect');
+            }
+        });
+
+        if(isCorrect) score++;
+
+        // 스코어 보드 업데이트
+        document.getElementById('cnt-played').innerText = `푼 문제: ${played}`;
+        document.getElementById('cnt-score').innerText = `정답 수: ${score} (${Math.round((score/played)*100)}%)`;
+
+        // 상세 해설 피드백 노출
+        const fb = document.getElementById('place-feedback');
+        fb.style.display = "block";
+        if(isCorrect) {
+            fb.className = "feedback";
+            fb.innerHTML = `<h3>🎉 정답입니다!</h3>`;
+        } else {
+            fb.className = "feedback wrong";
+            fb.innerHTML = `<h3>😢 오답입니다.</h3>`;
+        }
+
+        fb.innerHTML += `
+            <p><strong>정답 문장:</strong> ${currentQuiz.answer}</p>
+            <p><strong>발음 병음:</strong> ${currentQuiz.pinyin}</p>
+            <p><strong>한국어 뜻:</strong> ${currentQuiz.meaning}</p>
+            <p style="margin-top:10px; font-size:14px; color:#555;">💡 <strong>어순 법칙:</strong> ${currentQuiz.rules}</p>
+        `;
+
+        document.getElementById('btn-action').innerText = "다음 문제 풀기 ➡️";
+    }
+
+    window.onload = function() {
+        loadQuestion();
+    };
+</script>
+
+</body>
+</html>
