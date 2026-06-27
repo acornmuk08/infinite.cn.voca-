@@ -1,0 +1,2 @@
+# infinite.cn.voca-
+ㅁㄴㅇㄹ
